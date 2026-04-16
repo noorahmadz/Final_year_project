@@ -593,8 +593,32 @@ export const GymProvider = ({ children }) => {
     return teams.filter((t) => t.tournamentId === tournamentId);
   };
 
-  // Register a team to a specific tournament
+// Register a team to a specific tournament
   const registerTeamToTournament = (tournamentId, teamData) => {
+    // Find the tournament to check for existing teams
+    const tournament = tournaments.find(t => t.id === tournamentId);
+    if (!tournament) return null;
+
+    const existingTeams = tournament.registeredTeams || [];
+
+    // Check for duplicate by team name (case-insensitive)
+    const isDuplicateByName = existingTeams.some(
+      (team) => team.captainName?.toLowerCase() === teamData.captainName?.toLowerCase()
+    );
+    if (isDuplicateByName) {
+      console.warn("Team already registered in this tournament");
+      return null;
+    }
+
+    // Check for duplicate by phone number
+    const isDuplicateByPhone = existingTeams.some(
+      (team) => team.phoneNumber === teamData.phoneNumber
+    );
+    if (isDuplicateByPhone) {
+      console.warn("A team with this phone number is already registered");
+      return null;
+    }
+
     const newTeam = {
       ...teamData,
       id: generateId("team"),
@@ -614,14 +638,150 @@ export const GymProvider = ({ children }) => {
               ...tournament,
               registeredTeams: [
                 ...(tournament.registeredTeams || []),
-                newTeam,
-              ],
+                newTeam],
             }
           : tournament,
       ),
     );
 
     return newTeam;
+  };
+
+  // ==================== MATCH MANAGEMENT ====================
+
+  // Create a match between two teams
+  const createMatch = (tournamentId, team1Id, team2Id, matchData = {}) => {
+    const match = {
+      id: generateId("match"),
+      tournamentId,
+      team1Id,
+      team2Id,
+      round: matchData.round || 1,
+      matchNumber: matchData.matchNumber || 1,
+      winner: null,
+      loser: null,
+      status: "scheduled", // scheduled, completed
+      createdAt: new Date().toISOString(),
+    };
+
+    setTournaments((prev) =>
+      prev.map((tournament) =>
+        tournament.id === tournamentId
+          ? {
+              ...tournament,
+              matches: [...(tournament.matches || []), match],
+            }
+          : tournament,
+      ),
+    );
+
+    return match;
+  };
+
+  // Update match result (set winner and loser)
+  const updateMatchResult = (tournamentId, matchId, winnerId, loserId) => {
+    setTournaments((prev) =>
+      prev.map((tournament) => {
+        if (tournament.id !== tournamentId) return tournament;
+
+        const updatedMatches = tournament.matches?.map((match) => {
+          if (match.id !== matchId) return match;
+
+          return {
+            ...match,
+            winner: winnerId,
+            loser: loserId,
+            status: "completed",
+            completedAt: new Date().toISOString(),
+          };
+        }) || [];
+
+        // Update tournament status to in_progress if matches exist
+        let status = tournament.status;
+        if (tournament.status === "upcoming" && updatedMatches.some(m => m.status === "completed")) {
+          status = "in_progress";
+        }
+
+        // Calculate team stats
+        const teamStats = calculateTeamStats(tournament.id, updatedMatches, tournament.registeredTeams || []);
+
+        // Check if all matches are completed
+        const allMatchesCompleted = updatedMatches.length > 0 && updatedMatches.every(m => m.status === "completed");
+
+        return {
+          ...tournament,
+          matches: updatedMatches,
+          status: allMatchesCompleted ? "completed" : status,
+          teamStats,
+        };
+      }),
+    );
+  };
+
+  // Calculate team statistics
+  const calculateTeamStats = (tournamentId, matches, registeredTeams) => {
+    const stats = {};
+
+    // Initialize stats for each team
+    registeredTeams.forEach(team => {
+      stats[team.id] = {
+        teamId: team.id,
+        captainName: team.captainName,
+        played: 0,
+        wins: 0,
+        losses: 0,
+        points: 0,
+      };
+    });
+
+    // Calculate stats from matches
+    matches.forEach(match => {
+      if (match.status === "completed" && match.winner && match.loser) {
+        // Update winner
+        if (stats[match.winner]) {
+          stats[match.winner].played += 1;
+          stats[match.winner].wins += 1;
+          stats[match.winner].points += 1;
+        }
+
+        // Update loser
+        if (stats[match.loser]) {
+          stats[match.loser].played += 1;
+          stats[match.loser].losses += 1;
+        }
+      }
+    });
+
+    // Convert to array and sort by points (desc), then wins (desc)
+    return Object.values(stats).sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      return b.wins - a.wins;
+    });
+  };
+
+  // Get team stats for a tournament
+  const getTeamStats = (tournamentId) => {
+    const tournament = tournaments.find(t => t.id === tournamentId);
+    if (!tournament) return [];
+    return tournament.teamStats || [];
+  };
+
+  // Get matches for a tournament
+  const getMatchesByTournament = (tournamentId) => {
+    const tournament = tournaments.find(t => t.id === tournamentId);
+    return tournament?.matches || [];
+  };
+
+  // Get pending matches (matches without results)
+  const getPendingMatches = (tournamentId) => {
+    const tournament = tournaments.find(t => t.id === tournamentId);
+    return tournament?.matches?.filter(m => m.status === "scheduled") || [];
+  };
+
+  // Get completed matches
+  const getCompletedMatches = (tournamentId) => {
+    const tournament = tournaments.find(t => t.id === tournamentId);
+    return tournament?.matches?.filter(m => m.status === "completed") || [];
   };
 
   // Context value
@@ -708,6 +868,14 @@ export const GymProvider = ({ children }) => {
     updateTeam,
     confirmTeamPayment,
     getTeamsByTournament,
+
+    // Match Management
+    createMatch,
+    updateMatchResult,
+    getTeamStats,
+    getMatchesByTournament,
+    getPendingMatches,
+    getCompletedMatches,
   };
 
   return <GymContext.Provider value={value}>{children}</GymContext.Provider>;

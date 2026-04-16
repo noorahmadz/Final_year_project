@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Alert,
   FlatList,
@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 import { useGym } from "../context/GymContext";
+import { useIsFocused } from "@react-navigation/native";
 
 export default function TournamentListScreen({ navigation }) {
   const { tournaments, gyms, registerTeamToTournament } = useGym();
@@ -27,6 +28,15 @@ export default function TournamentListScreen({ navigation }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [registrationFee, setRegistrationFee] = useState("");
   const [feeError, setFeeError] = useState("");
+  const isFocused = useIsFocused();
+
+  // Refresh data when screen comes into focus
+  useEffect(() => {
+    if (isFocused) {
+      // The tournaments from context will automatically update
+      // This effect ensures re-render when returning to the screen
+    }
+  }, [isFocused]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -97,6 +107,24 @@ export default function TournamentListScreen({ navigation }) {
     const feeValue = parseInt(registrationFee);
     if (feeValue !== selectedTournament.entryFee) {
       setFeeError(`You must enter exactly ${selectedTournament.entryFee} AFG`);
+      return;
+    }
+
+    // Check for duplicate team registration
+    const existingTeams = selectedTournament.registeredTeams || [];
+    const isDuplicateByName = existingTeams.some(
+      (team) => team.captainName?.toLowerCase() === captainName.trim().toLowerCase()
+    );
+    const isDuplicateByPhone = existingTeams.some(
+      (team) => team.phoneNumber === phoneNumber.trim()
+    );
+
+    if (isDuplicateByName) {
+      Alert.alert("Error", "This team is already registered in this tournament.");
+      return;
+    }
+    if (isDuplicateByPhone) {
+      Alert.alert("Error", "A team with this phone number is already registered.");
       return;
     }
 
@@ -199,6 +227,22 @@ export default function TournamentListScreen({ navigation }) {
               {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
             </Text>
           </View>
+          {item.time && (
+            <View style={styles.detailRow}>
+              <Ionicons name="time-outline" size={16} color="#6B7280" />
+              <Text style={styles.detailText}>
+                Time: {item.time}
+              </Text>
+            </View>
+          )}
+          {item.duration && (
+            <View style={styles.detailRow}>
+              <Ionicons name="timer-outline" size={16} color="#6B7280" />
+              <Text style={styles.detailText}>
+                Duration: {item.duration} min
+              </Text>
+            </View>
+          )}
           <View style={styles.detailRow}>
             <Ionicons name="cash-outline" size={16} color="#6B7280" />
             <Text style={styles.detailText}>
@@ -220,6 +264,65 @@ export default function TournamentListScreen({ navigation }) {
                 <Text style={styles.resultValue}>{item.result.runnerUp}</Text>
               </View>
             )}
+            
+            {/* Leaderboard Table */}
+            {item.teamStats && item.teamStats.length > 0 && (
+              <View style={styles.leaderboardTable}>
+                <View style={styles.leaderboardHeader}>
+                  <Text style={[styles.leaderboardHeaderText, styles.colTeam]}>Team</Text>
+                  <Text style={[styles.leaderboardHeaderText, styles.colPlayed]}>P</Text>
+                  <Text style={[styles.leaderboardHeaderText, styles.colWins]}>W</Text>
+                  <Text style={[styles.leaderboardHeaderText, styles.colPoints]}>Pts</Text>
+                </View>
+                {item.teamStats.map((stat, index) => (
+                  <View 
+                    key={stat.teamId || index} 
+                    style={[
+                      styles.leaderboardRow,
+                      index === 0 && styles.leaderboardRowFirst
+                    ]}
+                  >
+                    <Text style={[styles.leaderboardCell, styles.colTeam]}>
+                      {index + 1}. {stat.captainName}
+                    </Text>
+                    <Text style={[styles.leaderboardCell, styles.colPlayed]}>{stat.played}</Text>
+                    <Text style={[styles.leaderboardCell, styles.colWins]}>{stat.wins}</Text>
+                    <Text style={[styles.leaderboardCellPoints, styles.colPoints]}>{stat.points}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Show in progress leaderboard */}
+        {status === "in_progress" && item.teamStats && item.teamStats.length > 0 && (
+          <View style={styles.resultSection}>
+            <Text style={styles.resultTitle}>Live Standings</Text>
+            <View style={styles.leaderboardTable}>
+              <View style={styles.leaderboardHeader}>
+                <Text style={[styles.leaderboardHeaderText, styles.colTeam]}>Team</Text>
+                <Text style={[styles.leaderboardHeaderText, styles.colPlayed]}>P</Text>
+                <Text style={[styles.leaderboardHeaderText, styles.colWins]}>W</Text>
+                <Text style={[styles.leaderboardHeaderText, styles.colPoints]}>Pts</Text>
+              </View>
+              {item.teamStats.map((stat, index) => (
+                <View 
+                  key={stat.teamId || index} 
+                  style={[
+                    styles.leaderboardRow,
+                    index === 0 && styles.leaderboardRowFirst
+                  ]}
+                >
+                  <Text style={[styles.leaderboardCell, styles.colTeam]}>
+                    {index + 1}. {stat.captainName}
+                  </Text>
+                  <Text style={[styles.leaderboardCell, styles.colPlayed]}>{stat.played}</Text>
+                  <Text style={[styles.leaderboardCell, styles.colWins]}>{stat.wins}</Text>
+                  <Text style={[styles.leaderboardCellPoints, styles.colPoints]}>{stat.points}</Text>
+                </View>
+              ))}
+            </View>
           </View>
         )}
 
@@ -266,6 +369,82 @@ export default function TournamentListScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Matches Section */}
+        {item.matches && item.matches.length > 0 && (
+          <View style={styles.matchesSection}>
+            <Text style={styles.matchesSectionTitle}>Matches ({item.matches.length})</Text>
+            {item.matches.map((match, idx) => {
+              const team1 = registeredTeams.find(t => t.id === match.team1Id);
+              const team2 = registeredTeams.find(t => t.id === match.team2Id);
+              const winner = match.winner ? registeredTeams.find(t => t.id === match.winner) : null;
+              return (
+                <View key={match.id || idx} style={[
+                  styles.matchItem,
+                  match.isFirstMatch && styles.firstMatchItem
+                ]}>
+                  <View style={styles.matchTeams}>
+                    <Text style={styles.matchTeamName}>{team1?.captainName || "TBD"}</Text>
+                    <Text style={styles.matchVS}>vs</Text>
+                    <Text style={styles.matchTeamName}>{team2?.captainName || "TBD"}</Text>
+                  </View>
+                  <View style={styles.matchStatusRow}>
+                    <View style={styles.matchInfoRow}>
+                      <Text style={[
+                        styles.matchStatusText,
+                        match.status === "completed" && styles.matchCompletedText
+                      ]}>
+                        {match.status === "completed" ? `Winner: ${winner?.captainName || "Unknown"}` : "Scheduled"}
+                      </Text>
+                      {match.isFirstMatch && (
+                        <View style={styles.firstMatchBadge}>
+                          <Text style={styles.firstMatchBadgeText}>First</Text>
+                        </View>
+                      )}
+                      {match.isAutoGenerated && (
+                        <View style={styles.autoMatchBadge}>
+                          <Text style={styles.autoMatchBadgeText}>Auto</Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={[
+                      styles.matchStatusBadge,
+                      match.status === "completed" ? styles.statusCompleted : styles.statusScheduled
+                    ]}>
+                      <Text style={styles.matchStatusBadgeText}>
+                        {match.status === "completed" ? "Completed" : "Pending"}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Leaderboard Section */}
+        {item.teamStats && item.teamStats.length > 0 && (
+          <View style={styles.leaderboardSection}>
+            <Text style={styles.leaderboardTitle}>Leaderboard</Text>
+            <View style={styles.leaderboardHeader}>
+              <Text style={[styles.leaderboardHeaderText, styles.colTeam]}>Team</Text>
+              <Text style={[styles.leaderboardHeaderText, styles.colPlayed]}>P</Text>
+              <Text style={[styles.leaderboardHeaderText, styles.colWins]}>W</Text>
+              <Text style={[styles.leaderboardHeaderText, styles.colPoints]}>Pts</Text>
+            </View>
+            {item.teamStats.map((stat, idx) => (
+              <View key={stat.teamId || idx} style={[
+                styles.leaderboardRow,
+                idx === 0 && styles.leaderboardRowFirst
+              ]}>
+                <Text style={[styles.leaderboardCell, styles.colTeam]}>{stat.captainName}</Text>
+                <Text style={[styles.leaderboardCell, styles.colPlayed]}>{stat.played}</Text>
+                <Text style={[styles.leaderboardCell, styles.colWins]}>{stat.wins}</Text>
+                <Text style={[styles.leaderboardCellPoints, styles.colPoints]}>{stat.points}</Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         {isExpanded && (
           <View style={styles.expandedContent}>
@@ -819,5 +998,172 @@ const styles = StyleSheet.create({
     color: "#999",
     marginTop: 8,
     textAlign: "center",
+  },
+  leaderboardTable: {
+    marginTop: 12,
+    borderRadius: 8,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  leaderboardHeader: {
+    flexDirection: "row",
+    backgroundColor: "#2563EB",
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+  },
+  leaderboardHeaderText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  leaderboardRow: {
+    flexDirection: "row",
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+    backgroundColor: "#F9FAFB",
+  },
+  leaderboardRowFirst: {
+    backgroundColor: "#FEF3C7",
+  },
+  leaderboardCell: {
+    fontSize: 13,
+    color: "#1F2937",
+    textAlign: "center",
+  },
+  leaderboardCellPoints: {
+    fontSize: 13,
+    color: "#2563EB",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  colTeam: {
+    flex: 2,
+    textAlign: "left",
+  },
+  colPlayed: {
+    flex: 1,
+  },
+  colWins: {
+    flex: 1,
+  },
+  colPoints: {
+    flex: 1,
+  },
+  // Matches section styles
+  matchesSection: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 8,
+  },
+  matchesSectionTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#1F2937",
+    marginBottom: 10,
+  },
+  matchItem: {
+    backgroundColor: "#fff",
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  matchTeams: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  matchTeamName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1F2937",
+    flex: 1,
+    textAlign: "center",
+  },
+  matchVS: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#6B7280",
+    marginHorizontal: 8,
+  },
+  matchStatusRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  matchInfoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  firstMatchItem: {
+    borderWidth: 2,
+    borderColor: "#7C3AED",
+  },
+  firstMatchBadge: {
+    backgroundColor: "#7C3AED",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginLeft: 6,
+  },
+  firstMatchBadgeText: {
+    fontSize: 9,
+    fontWeight: "600",
+    color: "#fff",
+  },
+  autoMatchBadge: {
+    backgroundColor: "#E5E7EB",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginLeft: 4,
+  },
+  autoMatchBadgeText: {
+    fontSize: 9,
+    fontWeight: "600",
+    color: "#6B7280",
+  },
+  matchStatusText: {
+    fontSize: 12,
+    color: "#6B7280",
+  },
+  matchCompletedText: {
+    color: "#10B981",
+    fontWeight: "600",
+  },
+  matchStatusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusCompleted: {
+    backgroundColor: "#D1FAE5",
+  },
+  statusScheduled: {
+    backgroundColor: "#FEF3C7",
+  },
+  matchStatusBadgeText: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#6B7280",
+  },
+  // Leaderboard section styles
+  leaderboardSection: {
+    marginTop: 12,
+    borderRadius: 8,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  leaderboardTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#1F2937",
+    marginBottom: 8,
   },
 });
