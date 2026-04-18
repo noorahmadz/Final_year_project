@@ -229,22 +229,43 @@ const GymCard = ({ gym, navigation, onSelectGym }) => {
 };
 
 // Main GymList Component
-export default function GymList({ navigation }) {
+export default function GymList({ navigation, searchQuery = "" }) {
   const { gyms, selectGym, currentGym, getApprovedGyms } = useGym();
 
   // Only show approved gyms to users
   const approvedGyms = getApprovedGyms();
 
+  // Filter gyms by search query (case-insensitive)
+  const filteredGyms = approvedGyms.filter((gym) =>
+    gym.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
   const handleSelectGym = (gym) => {
     selectGym(gym.id);
   };
 
-  if (!approvedGyms || approvedGyms.length === 0) {
+  const displayGyms = filteredGyms.length > 0 ? filteredGyms : [];
+
+  const isSearchingNoResults =
+    searchQuery.length > 0 && filteredGyms.length === 0;
+  const showNoGymsYet = approvedGyms.length === 0;
+
+  if (showNoGymsYet || isSearchingNoResults) {
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="business-outline" size={60} color="#ccc" />
-        <Text style={styles.emptyTitle}>No Gyms Available</Text>
-        <Text style={styles.emptyText}>There are no approved gyms yet.</Text>
+        <Ionicons
+          name={isSearchingNoResults ? "search" : "business-outline"}
+          size={60}
+          color="#ccc"
+        />
+        <Text style={styles.emptyTitle}>
+          {isSearchingNoResults ? "No gyms found" : "No Gyms Available"}
+        </Text>
+        <Text style={styles.emptyText}>
+          {isSearchingNoResults
+            ? `"${searchQuery}" - Try a different name`
+            : "There are no approved gyms yet."}
+        </Text>
       </View>
     );
   }
@@ -255,12 +276,12 @@ export default function GymList({ navigation }) {
       <View style={styles.listHeader}>
         <Text style={styles.listTitle}>Available Gyms</Text>
         <Text style={styles.listCount}>
-          {approvedGyms.length} gym{approvedGyms.length !== 1 ? "s" : ""}
+          {displayGyms.length} gym{displayGyms.length !== 1 ? "s" : ""}
         </Text>
       </View>
 
       {/* Gym Cards */}
-      {approvedGyms.map((gym) => (
+      {displayGyms.map((gym) => (
         <GymCard
           key={gym.id}
           gym={gym}

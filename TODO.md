@@ -1,18 +1,28 @@
-# OwnerDashboard.js Tournament Fixes - Implementation Steps
+# Search Improvement - Not Found Message (Completed ✅)
 
-## Completed
+## Original Search Bar Status
 
-- [x] Create TODO.md with implementation steps
-- [x] Step 1: Add availableCourts state + update gym selection logic ✅
+- ✅ Modern search bar in HomeScreen.js
+- ✅ Real-time case-insensitive gym name filtering
+- ✅ Clear (X) button
+- ✅ Matches app theme
+- ✅ Smooth performance
 
-## Remaining Steps
+## New Improvement Added
 
-1. **Add Court Selection UI** section in tournament modal JSX (after gym selector)
-2. **Remove Entry Fee** - delete state, JSX, validation, tournamentData prop
-3. **Update Tournament Time** - change placeholder, add HH:MM-HH:MM regex validation + start<end check
-4. **Remove Max Teams** - delete state, JSX, tournamentData prop
-5. **Cleanup** openTournamentModal/resetTournamentForm calls for removed states
-6. **Test** modal flow: gym select → courts display/select → time validate → save
-7. **attempt_completion** once verified
+- ✅ Clear "No gyms found" message when no matches
+- ✅ Only shows when searchQuery non-empty AND filteredGyms.length === 0
+- ✅ Search icon in empty state
+- ✅ Friendly subtitle: `No gyms match "${searchQuery}"`
+- ✅ Falls back to original empty state when no gyms exist
+- ✅ List count now shows filtered count
+- ✅ Uses displayGyms for rendering (filtered or all)
 
-**Current: Step 4 - Tournament Time & Max Teams**
+## All Requirements Met
+
+- Current functionality preserved
+- Conditional rendering (searchQuery non-empty)
+- Centered, themed UI
+- Clean & maintainable code
+
+**Ready to run: `npx expo start` → Home → Test search "xyz" (no match) vs "Padel" (match) vs empty (all gyms)**

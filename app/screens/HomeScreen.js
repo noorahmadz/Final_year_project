@@ -1,13 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useRef } from "react";
+import React, { useState } from "react";
 import {
   Animated,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import GymList from "../components/GymList";
+
+import { useEffect, useRef } from "react";
 
 function FootballAnimation() {
   const bounceAnim = useRef(new Animated.Value(0)).current;
@@ -69,6 +72,12 @@ function FootballAnimation() {
 }
 
 export default function HomeScreen({ navigation }) {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const clearSearch = () => {
+    setSearchQuery("");
+  };
+
   return (
     <View style={styles.container}>
       {/* Header with Owner, Text with Animation, and Admin Login */}
@@ -112,8 +121,32 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <Ionicons
+          name="search"
+          size={20}
+          color="#2563EB"
+          style={styles.searchIcon}
+        />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search gyms..."
+          placeholderTextColor="#999"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          autoCapitalize="none"
+          returnKeyType="search"
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+            <Ionicons name="close" size={20} color="#666" />
+          </TouchableOpacity>
+        )}
+      </View>
+
       {/* Gym List */}
-      <GymList navigation={navigation} />
+      <GymList navigation={navigation} searchQuery={searchQuery} />
 
       {/* Bottom Navigation Buttons */}
       {/* <View style={styles.bottomButtons}>
@@ -218,5 +251,32 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopWidth: 1,
     borderTopColor: "#E5E7EB",
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    marginHorizontal: 20,
+    marginBottom: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 25,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  searchIcon: {
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#1F2937",
+    backgroundColor: "transparent",
+  },
+  clearButton: {
+    padding: 4,
   },
 });

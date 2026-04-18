@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState, useEffect } from "react";
+import { useIsFocused } from "@react-navigation/native";
+import { useEffect, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -16,11 +17,11 @@ import {
   View,
 } from "react-native";
 import { useGym } from "../context/GymContext";
-import { useIsFocused } from "@react-navigation/native";
 
 export default function TournamentListScreen({ navigation }) {
   const { tournaments, gyms, registerTeamToTournament } = useGym();
   const [activeFilter, setActiveFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [expandedCards, setExpandedCards] = useState({});
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [selectedTournament, setSelectedTournament] = useState(null);
@@ -69,10 +70,14 @@ export default function TournamentListScreen({ navigation }) {
       calculatedStatus: getTournamentStatus(item),
     }));
 
-  const filteredTournaments =
+  const baseFilteredTournaments =
     activeFilter === "all"
       ? approvedTournaments
       : approvedTournaments.filter((t) => t.calculatedStatus === activeFilter);
+
+  const filteredTournaments = baseFilteredTournaments.filter((tournament) =>
+    tournament.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   const toggleCardExpansion = (tournamentId) => {
     setExpandedCards((prev) => ({
@@ -113,18 +118,25 @@ export default function TournamentListScreen({ navigation }) {
     // Check for duplicate team registration
     const existingTeams = selectedTournament.registeredTeams || [];
     const isDuplicateByName = existingTeams.some(
-      (team) => team.captainName?.toLowerCase() === captainName.trim().toLowerCase()
+      (team) =>
+        team.captainName?.toLowerCase() === captainName.trim().toLowerCase(),
     );
     const isDuplicateByPhone = existingTeams.some(
-      (team) => team.phoneNumber === phoneNumber.trim()
+      (team) => team.phoneNumber === phoneNumber.trim(),
     );
 
     if (isDuplicateByName) {
-      Alert.alert("Error", "This team is already registered in this tournament.");
+      Alert.alert(
+        "Error",
+        "This team is already registered in this tournament.",
+      );
       return;
     }
     if (isDuplicateByPhone) {
-      Alert.alert("Error", "A team with this phone number is already registered.");
+      Alert.alert(
+        "Error",
+        "A team with this phone number is already registered.",
+      );
       return;
     }
 
@@ -230,19 +242,17 @@ export default function TournamentListScreen({ navigation }) {
           {item.time && (
             <View style={styles.detailRow}>
               <Ionicons name="time-outline" size={16} color="#6B7280" />
-              <Text style={styles.detailText}>
-                Time: {item.time}
-              </Text>
+              <Text style={styles.detailText}>Time Duration: {item.time}</Text>
             </View>
           )}
-          {item.duration && (
+          {/* {item.duration && (
             <View style={styles.detailRow}>
               <Ionicons name="timer-outline" size={16} color="#6B7280" />
               <Text style={styles.detailText}>
                 Duration: {item.duration} min
               </Text>
             </View>
-          )}
+          )} */}
           <View style={styles.detailRow}>
             <Ionicons name="cash-outline" size={16} color="#6B7280" />
             <Text style={styles.detailText}>
@@ -264,30 +274,50 @@ export default function TournamentListScreen({ navigation }) {
                 <Text style={styles.resultValue}>{item.result.runnerUp}</Text>
               </View>
             )}
-            
+
             {/* Leaderboard Table */}
             {item.teamStats && item.teamStats.length > 0 && (
               <View style={styles.leaderboardTable}>
                 <View style={styles.leaderboardHeader}>
-                  <Text style={[styles.leaderboardHeaderText, styles.colTeam]}>Team</Text>
-                  <Text style={[styles.leaderboardHeaderText, styles.colPlayed]}>P</Text>
-                  <Text style={[styles.leaderboardHeaderText, styles.colWins]}>W</Text>
-                  <Text style={[styles.leaderboardHeaderText, styles.colPoints]}>Pts</Text>
+                  <Text style={[styles.leaderboardHeaderText, styles.colTeam]}>
+                    Team
+                  </Text>
+                  <Text
+                    style={[styles.leaderboardHeaderText, styles.colPlayed]}
+                  >
+                    P
+                  </Text>
+                  <Text style={[styles.leaderboardHeaderText, styles.colWins]}>
+                    W
+                  </Text>
+                  <Text
+                    style={[styles.leaderboardHeaderText, styles.colPoints]}
+                  >
+                    Pts
+                  </Text>
                 </View>
                 {item.teamStats.map((stat, index) => (
-                  <View 
-                    key={stat.teamId || index} 
+                  <View
+                    key={stat.teamId || index}
                     style={[
                       styles.leaderboardRow,
-                      index === 0 && styles.leaderboardRowFirst
+                      index === 0 && styles.leaderboardRowFirst,
                     ]}
                   >
                     <Text style={[styles.leaderboardCell, styles.colTeam]}>
                       {index + 1}. {stat.captainName}
                     </Text>
-                    <Text style={[styles.leaderboardCell, styles.colPlayed]}>{stat.played}</Text>
-                    <Text style={[styles.leaderboardCell, styles.colWins]}>{stat.wins}</Text>
-                    <Text style={[styles.leaderboardCellPoints, styles.colPoints]}>{stat.points}</Text>
+                    <Text style={[styles.leaderboardCell, styles.colPlayed]}>
+                      {stat.played}
+                    </Text>
+                    <Text style={[styles.leaderboardCell, styles.colWins]}>
+                      {stat.wins}
+                    </Text>
+                    <Text
+                      style={[styles.leaderboardCellPoints, styles.colPoints]}
+                    >
+                      {stat.points}
+                    </Text>
                   </View>
                 ))}
               </View>
@@ -296,35 +326,57 @@ export default function TournamentListScreen({ navigation }) {
         )}
 
         {/* Show in progress leaderboard */}
-        {status === "in_progress" && item.teamStats && item.teamStats.length > 0 && (
-          <View style={styles.resultSection}>
-            <Text style={styles.resultTitle}>Live Standings</Text>
-            <View style={styles.leaderboardTable}>
-              <View style={styles.leaderboardHeader}>
-                <Text style={[styles.leaderboardHeaderText, styles.colTeam]}>Team</Text>
-                <Text style={[styles.leaderboardHeaderText, styles.colPlayed]}>P</Text>
-                <Text style={[styles.leaderboardHeaderText, styles.colWins]}>W</Text>
-                <Text style={[styles.leaderboardHeaderText, styles.colPoints]}>Pts</Text>
-              </View>
-              {item.teamStats.map((stat, index) => (
-                <View 
-                  key={stat.teamId || index} 
-                  style={[
-                    styles.leaderboardRow,
-                    index === 0 && styles.leaderboardRowFirst
-                  ]}
-                >
-                  <Text style={[styles.leaderboardCell, styles.colTeam]}>
-                    {index + 1}. {stat.captainName}
+        {status === "in_progress" &&
+          item.teamStats &&
+          item.teamStats.length > 0 && (
+            <View style={styles.resultSection}>
+              <Text style={styles.resultTitle}>Live Standings</Text>
+              <View style={styles.leaderboardTable}>
+                <View style={styles.leaderboardHeader}>
+                  <Text style={[styles.leaderboardHeaderText, styles.colTeam]}>
+                    Team
                   </Text>
-                  <Text style={[styles.leaderboardCell, styles.colPlayed]}>{stat.played}</Text>
-                  <Text style={[styles.leaderboardCell, styles.colWins]}>{stat.wins}</Text>
-                  <Text style={[styles.leaderboardCellPoints, styles.colPoints]}>{stat.points}</Text>
+                  <Text
+                    style={[styles.leaderboardHeaderText, styles.colPlayed]}
+                  >
+                    P
+                  </Text>
+                  <Text style={[styles.leaderboardHeaderText, styles.colWins]}>
+                    W
+                  </Text>
+                  <Text
+                    style={[styles.leaderboardHeaderText, styles.colPoints]}
+                  >
+                    Pts
+                  </Text>
                 </View>
-              ))}
+                {item.teamStats.map((stat, index) => (
+                  <View
+                    key={stat.teamId || index}
+                    style={[
+                      styles.leaderboardRow,
+                      index === 0 && styles.leaderboardRowFirst,
+                    ]}
+                  >
+                    <Text style={[styles.leaderboardCell, styles.colTeam]}>
+                      {index + 1}. {stat.captainName}
+                    </Text>
+                    <Text style={[styles.leaderboardCell, styles.colPlayed]}>
+                      {stat.played}
+                    </Text>
+                    <Text style={[styles.leaderboardCell, styles.colWins]}>
+                      {stat.wins}
+                    </Text>
+                    <Text
+                      style={[styles.leaderboardCellPoints, styles.colPoints]}
+                    >
+                      {stat.points}
+                    </Text>
+                  </View>
+                ))}
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
         {status === "upcoming" && (
           <View style={styles.registrationInfo}>
@@ -373,28 +425,44 @@ export default function TournamentListScreen({ navigation }) {
         {/* Matches Section */}
         {item.matches && item.matches.length > 0 && (
           <View style={styles.matchesSection}>
-            <Text style={styles.matchesSectionTitle}>Matches ({item.matches.length})</Text>
+            <Text style={styles.matchesSectionTitle}>
+              Matches ({item.matches.length})
+            </Text>
             {item.matches.map((match, idx) => {
-              const team1 = registeredTeams.find(t => t.id === match.team1Id);
-              const team2 = registeredTeams.find(t => t.id === match.team2Id);
-              const winner = match.winner ? registeredTeams.find(t => t.id === match.winner) : null;
+              const team1 = registeredTeams.find((t) => t.id === match.team1Id);
+              const team2 = registeredTeams.find((t) => t.id === match.team2Id);
+              const winner = match.winner
+                ? registeredTeams.find((t) => t.id === match.winner)
+                : null;
               return (
-                <View key={match.id || idx} style={[
-                  styles.matchItem,
-                  match.isFirstMatch && styles.firstMatchItem
-                ]}>
+                <View
+                  key={match.id || idx}
+                  style={[
+                    styles.matchItem,
+                    match.isFirstMatch && styles.firstMatchItem,
+                  ]}
+                >
                   <View style={styles.matchTeams}>
-                    <Text style={styles.matchTeamName}>{team1?.captainName || "TBD"}</Text>
+                    <Text style={styles.matchTeamName}>
+                      {team1?.captainName || "TBD"}
+                    </Text>
                     <Text style={styles.matchVS}>vs</Text>
-                    <Text style={styles.matchTeamName}>{team2?.captainName || "TBD"}</Text>
+                    <Text style={styles.matchTeamName}>
+                      {team2?.captainName || "TBD"}
+                    </Text>
                   </View>
                   <View style={styles.matchStatusRow}>
                     <View style={styles.matchInfoRow}>
-                      <Text style={[
-                        styles.matchStatusText,
-                        match.status === "completed" && styles.matchCompletedText
-                      ]}>
-                        {match.status === "completed" ? `Winner: ${winner?.captainName || "Unknown"}` : "Scheduled"}
+                      <Text
+                        style={[
+                          styles.matchStatusText,
+                          match.status === "completed" &&
+                            styles.matchCompletedText,
+                        ]}
+                      >
+                        {match.status === "completed"
+                          ? `Winner: ${winner?.captainName || "Unknown"}`
+                          : "Scheduled"}
                       </Text>
                       {match.isFirstMatch && (
                         <View style={styles.firstMatchBadge}>
@@ -407,10 +475,14 @@ export default function TournamentListScreen({ navigation }) {
                         </View>
                       )}
                     </View>
-                    <View style={[
-                      styles.matchStatusBadge,
-                      match.status === "completed" ? styles.statusCompleted : styles.statusScheduled
-                    ]}>
+                    <View
+                      style={[
+                        styles.matchStatusBadge,
+                        match.status === "completed"
+                          ? styles.statusCompleted
+                          : styles.statusScheduled,
+                      ]}
+                    >
                       <Text style={styles.matchStatusBadgeText}>
                         {match.status === "completed" ? "Completed" : "Pending"}
                       </Text>
@@ -427,20 +499,39 @@ export default function TournamentListScreen({ navigation }) {
           <View style={styles.leaderboardSection}>
             <Text style={styles.leaderboardTitle}>Leaderboard</Text>
             <View style={styles.leaderboardHeader}>
-              <Text style={[styles.leaderboardHeaderText, styles.colTeam]}>Team</Text>
-              <Text style={[styles.leaderboardHeaderText, styles.colPlayed]}>P</Text>
-              <Text style={[styles.leaderboardHeaderText, styles.colWins]}>W</Text>
-              <Text style={[styles.leaderboardHeaderText, styles.colPoints]}>Pts</Text>
+              <Text style={[styles.leaderboardHeaderText, styles.colTeam]}>
+                Team
+              </Text>
+              <Text style={[styles.leaderboardHeaderText, styles.colPlayed]}>
+                P
+              </Text>
+              <Text style={[styles.leaderboardHeaderText, styles.colWins]}>
+                W
+              </Text>
+              <Text style={[styles.leaderboardHeaderText, styles.colPoints]}>
+                Pts
+              </Text>
             </View>
             {item.teamStats.map((stat, idx) => (
-              <View key={stat.teamId || idx} style={[
-                styles.leaderboardRow,
-                idx === 0 && styles.leaderboardRowFirst
-              ]}>
-                <Text style={[styles.leaderboardCell, styles.colTeam]}>{stat.captainName}</Text>
-                <Text style={[styles.leaderboardCell, styles.colPlayed]}>{stat.played}</Text>
-                <Text style={[styles.leaderboardCell, styles.colWins]}>{stat.wins}</Text>
-                <Text style={[styles.leaderboardCellPoints, styles.colPoints]}>{stat.points}</Text>
+              <View
+                key={stat.teamId || idx}
+                style={[
+                  styles.leaderboardRow,
+                  idx === 0 && styles.leaderboardRowFirst,
+                ]}
+              >
+                <Text style={[styles.leaderboardCell, styles.colTeam]}>
+                  {stat.captainName}
+                </Text>
+                <Text style={[styles.leaderboardCell, styles.colPlayed]}>
+                  {stat.played}
+                </Text>
+                <Text style={[styles.leaderboardCell, styles.colWins]}>
+                  {stat.wins}
+                </Text>
+                <Text style={[styles.leaderboardCellPoints, styles.colPoints]}>
+                  {stat.points}
+                </Text>
               </View>
             ))}
           </View>
@@ -566,6 +657,33 @@ export default function TournamentListScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
+      {/* Tournament Search Bar */}
+      <View style={styles.searchContainer}>
+        <Ionicons
+          name="search"
+          size={20}
+          color="#2563EB"
+          style={styles.searchIcon}
+        />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search tournaments..."
+          placeholderTextColor="#999"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          autoCapitalize="none"
+          returnKeyType="search"
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity
+            onPress={() => setSearchQuery("")}
+            style={styles.clearButton}
+          >
+            <Ionicons name="close" size={20} color="#666" />
+          </TouchableOpacity>
+        )}
+      </View>
+
       {/* Tournament List */}
       {filteredTournaments.length > 0 ? (
         <FlatList
@@ -577,12 +695,14 @@ export default function TournamentListScreen({ navigation }) {
         />
       ) : (
         <View style={styles.emptyContainer}>
-          <Ionicons name="trophy-outline" size={60} color="#ccc" />
-          <Text style={styles.emptyText}>No tournaments found</Text>
+          <Ionicons name="search" size={60} color="#ccc" />
+          <Text style={styles.emptyTitle}>No tournaments found</Text>
           <Text style={styles.emptySubtext}>
-            {activeFilter === "all"
-              ? "Tournaments will appear here when added by gym owners"
-              : `No ${activeFilter} tournaments available`}
+            {searchQuery
+              ? `"${searchQuery}" - Try a different tournament name`
+              : activeFilter === "all"
+                ? "Tournaments will appear here when added by gym owners"
+                : `No ${activeFilter} tournaments available`}
           </Text>
         </View>
       )}
@@ -692,6 +812,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F3F4F6",
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    marginHorizontal: 16,
+    marginVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 25,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  searchIcon: {
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#1F2937",
+    backgroundColor: "transparent",
+  },
+  clearButton: {
+    padding: 4,
   },
   header: {
     backgroundColor: "#F59E0B",
