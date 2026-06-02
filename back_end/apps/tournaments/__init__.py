@@ -1,0 +1,2 @@
+"""Tournaments app package."""
+

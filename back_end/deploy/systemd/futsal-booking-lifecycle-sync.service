@@ -1,0 +1,14 @@
+[Unit]
+Description=Futsal booking lifecycle synchronization
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/futsal/Futsal_project/back_end
+EnvironmentFile=/srv/futsal/.env
+ExecStart=/srv/futsal/venv/bin/python manage.py sync_booking_lifecycle
+User=futsal
+Group=futsal
+Nice=5
+

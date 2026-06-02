@@ -1,0 +1,17 @@
+{% load i18n %}
+{% blocktrans with name=customer_name %}Hello {{ name }},{% endblocktrans %}
+
+{% trans "Your booking has been confirmed successfully." %}
+
+{% trans "Booking Details" %}:
+{% trans "Booking ID" %}: {{ booking_id }}
+{% trans "Gym" %}: {{ gym_name }}
+{% trans "Court" %}: {{ court_name }}
+{% trans "Date" %}: {{ booking_date }}
+{% trans "Time" %}: {{ start_time }} - {{ end_time }}
+{% trans "Amount" %}: {{ amount }} {{ currency }}
+{% trans "Payment Status" %}: {{ payment_status }}
+{% trans "Booking Status" %}: {{ booking_status }}
+
+{% trans "Thank you for using our futsal booking system." %}
+{% trans "If you need help, please contact support." %}

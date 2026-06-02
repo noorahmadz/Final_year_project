@@ -1,0 +1,108 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-06 15:03+0430\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: ps\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: .\apps\common\api.py:44 .\apps\common\api.py:131
+msgid "Request could not be processed."
+msgstr "غوښتنه پروسس نه شوه."
+
+#: .\apps\common\api.py:188
+msgid "Created successfully."
+msgstr "په بریالیتوب جوړ شو."
+
+#: .\apps\common\api.py:199
+msgid "Updated successfully."
+msgstr "په بریالیتوب تازه شو."
+
+#: .\apps\payments\email_utils.py:57
+msgid "Booking Confirmation"
+msgstr "د بکینګ تایید"
+
+#: .\apps\users\email_utils.py:55
+msgid "Email Verification Code"
+msgstr "د ایمیل تایید کوډ"
+
+#: .\templates\emails\booking_confirmation.txt:2
+#, python-format
+msgid "Hello %(name)s,"
+msgstr "سلام %(name)s،"
+
+#: .\templates\emails\booking_confirmation.txt:4
+msgid "Your booking has been confirmed successfully."
+msgstr "ستاسو بکینګ په بریالیتوب تایید شو."
+
+#: .\templates\emails\booking_confirmation.txt:6
+msgid "Booking Details"
+msgstr "د بکینګ جزئیات"
+
+#: .\templates\emails\booking_confirmation.txt:7
+msgid "Booking ID"
+msgstr "د بکینګ پېژند"
+
+#: .\templates\emails\booking_confirmation.txt:8
+msgid "Gym"
+msgstr "جم"
+
+#: .\templates\emails\booking_confirmation.txt:9
+msgid "Court"
+msgstr "میدان"
+
+#: .\templates\emails\booking_confirmation.txt:10
+msgid "Date"
+msgstr "نېټه"
+
+#: .\templates\emails\booking_confirmation.txt:11
+msgid "Time"
+msgstr "وخت"
+
+#: .\templates\emails\booking_confirmation.txt:12
+msgid "Amount"
+msgstr "مقدار"
+
+#: .\templates\emails\booking_confirmation.txt:13
+msgid "Payment Status"
+msgstr "د تادیې حالت"
+
+#: .\templates\emails\booking_confirmation.txt:14
+msgid "Booking Status"
+msgstr "د بکینګ حالت"
+
+#: .\templates\emails\booking_confirmation.txt:16
+msgid "Thank you for using our futsal booking system."
+msgstr "زموږ د فوتسال بکینګ سیسټم کارولو لپاره مننه."
+
+#: .\templates\emails\booking_confirmation.txt:17
+msgid "If you need help, please contact support."
+msgstr "که مرستې ته اړتیا لرئ، مهرباني وکړئ له ملاتړ سره اړیکه ونیسئ."
+
+#: .\templates\emails\otp_verification.txt:2
+msgid "Your verification code is"
+msgstr "ستاسو د تایید کوډ دا دی"
+
+#: .\templates\emails\otp_verification.txt:4
+#, python-format
+msgid ""
+"\n"
+"It expires in %(minutes)s minutes.\n"
+msgstr ""
+"\n"
+"دا په %(minutes)s دقیقو کې پای ته رسېږي.\n"
+
+#: .\templates\emails\otp_verification.txt:8
+msgid "If you did not request this code, please ignore this email."
+msgstr "که تاسو دا کوډ نه وي غوښتلی، مهرباني وکړئ دا ایمیل له پامه وغورځوئ."

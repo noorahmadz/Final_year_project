@@ -1,0 +1,2 @@
+"""Revenues app package."""
+

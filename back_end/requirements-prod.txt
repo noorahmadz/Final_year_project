@@ -1,0 +1,46 @@
+-r requirements.txt
+gunicorn
+
+# =============================================================================
+# Futsal Mobile App - Production Requirements (Pinned Versions)
+# =============================================================================
+# This file contains EXACT pinned versions for production deployment.
+# Generate this file using: pip freeze > requirements-prod.txt
+# Or use the included script to generate from your environment.
+# =============================================================================
+
+# Core Django
+Django==6.0.2
+
+# REST API
+djangorestframework==3.14.0
+djangorestframework-simplejwt
+markdown==3.7
+django-filter==24.3
+
+# Media/Images
+Pillow==10.4.0
+
+# Security
+django-cors-headers==4.4.0
+PyJWT==2.9.0
+stripe>=10.0.0
+django-environ==0.13.0
+
+# Utilities
+# (Most utilities are included in Django or Python stdlib)
+
+# Production Server
+gunicorn==23.0.0
+whitenoise==6.7.0
+
+# Environment Variables
+python-dotenv==1.0.1
+
+# Email (Optional - uncomment if needed)
+# django-anymail==11.1
+# sendgrid==6.11.0
+
+# Database
+psycopg2-binary==2.9.9
+# mysqlclient==2.2.4

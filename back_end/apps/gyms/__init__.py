@@ -1,0 +1,2 @@
+"""Gyms app package."""
+
